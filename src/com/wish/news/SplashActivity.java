@@ -1,7 +1,10 @@
 package com.wish.news;
 
+import com.wish.news.utils.PreUtils;
+
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
@@ -73,7 +76,12 @@ public class SplashActivity extends Activity {
 	}
 
 	protected void goToHomePage() {
-		startActivity(new Intent(SplashActivity.this, GuideActivity.class));
+		boolean isGuideShowed = PreUtils.getGuideShowedPrefs(this, "is_guide_showed");
+		if(isGuideShowed){
+			startActivity(new Intent(SplashActivity.this, MainActivity.class));
+		}else{
+			startActivity(new Intent(SplashActivity.this, GuideActivity.class));
+		}
 		finish();
 	}
 
