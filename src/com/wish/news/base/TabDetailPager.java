@@ -1,18 +1,17 @@
 package com.wish.news.base;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 import android.app.Activity;
-import android.graphics.Color;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
-import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ImageView.ScaleType;
@@ -27,7 +26,6 @@ import com.lidroid.xutils.http.callback.RequestCallBack;
 import com.lidroid.xutils.http.client.HttpRequest.HttpMethod;
 import com.lidroid.xutils.view.annotation.ViewInject;
 import com.viewpagerindicator.CirclePageIndicator;
-import com.viewpagerindicator.TabPageIndicator;
 import com.wish.news.R;
 import com.wish.news.basenews.BaseNewsCenterPager;
 import com.wish.news.domain.TabData;
@@ -36,6 +34,7 @@ import com.wish.news.domain.TabData.TabNewsData;
 import com.wish.news.domain.TabData.TopNewsData;
 import com.wish.news.global.GlobalConstants;
 import com.wish.news.view.RefreshListView;
+import com.wish.news.view.RefreshListView.onRefreshListener;
 
 public class TabDetailPager extends BaseNewsCenterPager implements
 		OnPageChangeListener {
@@ -76,6 +75,13 @@ public class TabDetailPager extends BaseNewsCenterPager implements
 		ViewUtils.inject(this, view);
 		ViewUtils.inject(this, headerView);
 		lvList.addHeaderView(headerView);
+		lvList.setOnRefreshListener(new onRefreshListener() {
+
+			@Override
+			public void onRefresh() {
+				getDataFromServer();
+			}
+		});
 		return view;
 	}
 
@@ -96,11 +102,13 @@ public class TabDetailPager extends BaseNewsCenterPager implements
 				if (result != null) {
 					parseData(result);
 				}
+				lvList.refreshComplete(true);
 			}
 
 			@Override
 			public void onFailure(HttpException error, String msg) {
 				Toast.makeText(mActivity, "获取网络数据失败", 0).show();
+				lvList.refreshComplete(false);
 				error.printStackTrace();
 			}
 
