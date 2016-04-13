@@ -13,13 +13,16 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.RotateAnimation;
 import android.widget.AbsListView;
+import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.AbsListView.OnScrollListener;
+import android.widget.AdapterView.OnItemClickListener;
 
-public class RefreshListView extends ListView implements OnScrollListener {
+public class RefreshListView extends ListView implements OnScrollListener,
+		OnItemClickListener {
 
 	// 下拉刷新三种状态：1.下拉刷新； 2.松开刷新； 3.正在刷新
 	public static final int PULL_REFRESH = 0;
@@ -50,8 +53,8 @@ public class RefreshListView extends ListView implements OnScrollListener {
 	 * 加载底部加载更多布局
 	 */
 	private void initFooterView() {
-		View footerView = View.inflate(getContext(),
-				R.layout.footer_loading_more, null);
+		footerView = View.inflate(getContext(), R.layout.footer_loading_more,
+				null);
 		footerView.measure(0, 0);
 		footerHeight = footerView.getMeasuredHeight();
 		this.addFooterView(footerView);
@@ -139,15 +142,22 @@ public class RefreshListView extends ListView implements OnScrollListener {
 	}
 
 	public void refreshComplete(boolean isSuccess) {
+		// 收起头部布局（下拉刷新）
 		mCurrentState = PULL_REFRESH;
 		ivArrow.setVisibility(View.VISIBLE);
 		pbBar.setVisibility(View.INVISIBLE);
 		tvTitle.setText("下拉刷新");
-		refreshHeader.setPadding(0, -measuredHeight, 0, 0);
+
+		footerView.setPadding(0, -footerHeight, 0, 0);
 		if (isSuccess) {
 			tvDate.setText(getCurrentTime());
 		}
 
+		// 收起底部布局（加载更多）
+		if (isLoadingMore) {
+			refreshHeader.setPadding(0, -measuredHeight, 0, 0);// 隐藏加载更多布局
+			isLoadingMore = false;
+		}
 	}
 
 	public String getCurrentTime() {
@@ -193,6 +203,8 @@ public class RefreshListView extends ListView implements OnScrollListener {
 
 	public interface onRefreshListener {
 		public void onRefresh();
+
+		public void onLoadingMore();
 	}
 
 	@Override
@@ -201,8 +213,40 @@ public class RefreshListView extends ListView implements OnScrollListener {
 
 	}
 
+	private boolean isLoadingMore;
+	private View footerView;
+
 	@Override
 	public void onScrollStateChanged(AbsListView view, int scrollState) {
-		
+		if (scrollState == SCROLL_STATE_FLING
+				|| scrollState == SCROLL_STATE_IDLE) {// 如果处于空闲或惯性滑动则去加载
+
+			if (getLastVisiblePosition() == getCount() - 1 && !isLoadingMore) {
+				footerView.setPadding(0, 0, 0, 0);// 隐藏加载更多布局
+				isLoadingMore = true;
+				if (mListener != null) {// 加载更多
+					mListener.onLoadingMore();
+				}
+				setSelection(getCount() - 1);// 把位置显示到最后一个
+			}
+		}
+	}
+
+	private OnItemClickListener mItemClickListener;
+
+	@Override
+	public void setOnItemClickListener(
+			android.widget.AdapterView.OnItemClickListener listener) {
+		super.setOnItemClickListener(this);
+		mItemClickListener = listener;
+	}
+
+	@Override
+	public void onItemClick(AdapterView<?> parent, View view, int position,
+			long id) {
+		if(mItemClickListener!=null){
+			//对position进行处理，去掉头部布局的个数
+			mItemClickListener.onItemClick(parent, view, position-getHeaderViewsCount(), id);
+		}
 	}
 }

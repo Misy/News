@@ -31,7 +31,7 @@
             android:padding="5dp"
             app:fillColor="#88ff0000"
             app:pageColor="#ff888888"
-            app:radius="5dp"
+            app:radius="4dp"
             app:strokeWidth="0dp" />
     </RelativeLayout>
 

@@ -5,6 +5,7 @@ import java.util.List;
 
 import android.app.Activity;
 import android.graphics.Color;
+import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.TextView;
@@ -27,6 +28,7 @@ import com.wish.news.basenews.impl.SubjectPager;
 import com.wish.news.domain.NewsData;
 import com.wish.news.fragment.LeftMenuFrag;
 import com.wish.news.global.GlobalConstants;
+import com.wish.news.utils.CacheUtils;
 
 public class NewsCenterPager extends BasePager {
 
@@ -42,6 +44,11 @@ public class NewsCenterPager extends BasePager {
 		setSlidingMenu(true);
 		btnMenu.setVisibility(View.VISIBLE);
 		tvTitle.setText("新闻中心");
+		String cache = CacheUtils.getCache(mActivity,
+				GlobalConstants.CATEGORIES_URL);
+		if (!TextUtils.isEmpty(cache)) {
+			parseData(cache);
+		}
 		getDataFromServer();
 	}
 
@@ -56,6 +63,9 @@ public class NewsCenterPager extends BasePager {
 						Toast.makeText(mActivity, "获取json数据成功", 0).show();
 						if (result != null) {
 							parseData(result);
+							// 成功获取到网络数据，要把数据缓存起来
+							CacheUtils.setCache(GlobalConstants.CATEGORIES_URL,
+									result, mActivity);
 						}
 					}
 
@@ -77,7 +87,8 @@ public class NewsCenterPager extends BasePager {
 		setLeftMenuData();
 		// 初始化新闻中心页面
 		newsPagers = new ArrayList<BaseNewsCenterPager>();
-		newsPagers.add(new NewsPager(mActivity, mNewsData.data.get(0).children));
+		newsPagers
+				.add(new NewsPager(mActivity, mNewsData.data.get(0).children));
 		newsPagers.add(new SubjectPager(mActivity));
 		newsPagers.add(new PhotoPager(mActivity));
 		newsPagers.add(new InteractPager(mActivity));
